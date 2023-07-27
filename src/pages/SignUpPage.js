@@ -9,7 +9,10 @@ import { Button } from "../components/button";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "react-toastify";
-
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth, db } from "../firebase/firebase-config";
+import { useNavigate } from "react-router-dom";
+import { addDoc, collection } from "firebase/firestore";
 const SignUpPageStyles = styled.div`
   min-height: 100vh;
   padding: 40px;
@@ -34,15 +37,16 @@ const schema = yup.object({
   fullname: yup.string().required("Please enter your fullname"),
   email: yup
     .string()
-    .email("Please enter your email address")
+    .email("Please enter valid email address")
     .required("Please enter your email address"),
   password: yup
     .string()
-    .min(8, "your password least 8 ")
+    .min(8, "Your password must be at least 8 characters or greater")
     .required("Please enter your password"),
 });
 
 const SignUpPage = () => {
+  const navigate = useNavigate();
   const {
     control,
     handleSubmit,
@@ -54,9 +58,20 @@ const SignUpPage = () => {
     resolver: yupResolver(schema),
   });
 
-  const handleSignUp = (values) => {
+  const handleSignUp = async (values) => {
     if (!isValid) return;
-    console.log(values);
+    await createUserWithEmailAndPassword(auth, values.email, values.password);
+    await updateProfile(auth.currentUser, {
+      displayName: values.fullname,
+    });
+    const colRef = collection(db, "users");
+    addDoc(colRef, {
+      fullname: values.fullname,
+      email: values.email,
+      password: values.password,
+    });
+    toast.success("Register successfully");
+    navigate("/");
   };
 
   useEffect(() => {
