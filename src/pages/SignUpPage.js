@@ -1,10 +1,14 @@
 import { Label } from "../components/label";
-import React, { Children, useState } from "react";
+import React, { Children, useEffect, useState } from "react";
 import styled from "styled-components";
 import { Input } from "../components/input";
 import { useForm } from "react-hook-form";
 import { IconEyeClose, IconEyeOpen } from "../components/icon";
 import { Field } from "../components/field";
+import { Button } from "../components/button";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { toast } from "react-toastify";
 
 const SignUpPageStyles = styled.div`
   min-height: 100vh;
@@ -26,8 +30,42 @@ const SignUpPageStyles = styled.div`
   }
 `;
 
+const schema = yup.object({
+  fullname: yup.string().required("Please enter your fullname"),
+  email: yup
+    .string()
+    .email("Please enter your email address")
+    .required("Please enter your email address"),
+  password: yup
+    .string()
+    .min(8, "your password least 8 ")
+    .required("Please enter your password"),
+});
+
 const SignUpPage = () => {
-  const { control } = useForm({});
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isValid, isSubmitting },
+    watch,
+    reset,
+  } = useForm({
+    mode: "onChange",
+    resolver: yupResolver(schema),
+  });
+
+  const handleSignUp = (values) => {
+    if (!isValid) return;
+    console.log(values);
+  };
+
+  useEffect(() => {
+    const arrErroes = Object.values(errors);
+    if (arrErroes.length > 0) {
+      toast.error(arrErroes[0]?.message);
+    }
+  });
+
   const [togglePassword, setTooglePassword] = useState(false);
   return (
     <SignUpPageStyles>
@@ -35,7 +73,7 @@ const SignUpPage = () => {
         <img srcSet="/logo.png 2x" alt="monkey-logo" className="logo"></img>
 
         <h1 className="heading">Monkey blogging</h1>
-        <form className="form">
+        <form className="form" onSubmit={handleSubmit(handleSignUp)}>
           <Field>
             <Label htmlFor="fullname">Fullname</Label>
             <Input
@@ -77,6 +115,15 @@ const SignUpPage = () => {
               )}
             </Input>
           </Field>
+
+          <Button
+            style={{ maxWidth: 350, margin: "0 auto" }}
+            type="submit"
+            isLoading={isSubmitting}
+            disabled={isSubmitting}
+          >
+            button
+          </Button>
         </form>
       </div>
     </SignUpPageStyles>
