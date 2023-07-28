@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from "react";
-import { useAuth } from "../contexts/auth-context";
-import { NavLink, Navigate, useNavigate } from "react-router-dom";
-import AuthenticationPage from "./AuthenticationPage";
+import { Button } from "components/button";
+import { Field } from "components/field";
+import { Input } from "components/input";
+import { Label } from "components/label";
+import { useAuth } from "contexts/auth-context";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Field } from "../components/field";
-import { Button } from "../components/button";
-import { Input } from "../components/input";
-import { Label } from "../components/label";
+import { NavLink, useNavigate } from "react-router-dom";
+import AuthenticationPage from "./AuthenticationPage";
 import * as yup from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { toast } from "react-toastify";
-import { IconEyeClose, IconEyeOpen } from "../components/icon";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase/firebase-config";
+import { auth } from "firebase-app/firebase-config";
+import InputPasswordToggle from "components/input/InputPasswordToggle";
 
 const schema = yup.object({
   email: yup
@@ -24,8 +24,7 @@ const schema = yup.object({
     .min(8, "Your password must be at least 8 characters or greater")
     .required("Please enter your password"),
 });
-
-const SignIn = () => {
+const SignInPage = () => {
   const {
     handleSubmit,
     control,
@@ -34,76 +33,67 @@ const SignIn = () => {
     mode: "onChange",
     resolver: yupResolver(schema),
   });
-  const { userInfo } = useAuth();
-  const navigate = useNavigate();
-  useEffect(() => {
-    document.title = "login Page";
-    if (userInfo?.email) navigate("/");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  console.log(userInfo);
-
   useEffect(() => {
     const arrErroes = Object.values(errors);
     if (arrErroes.length > 0) {
-      toast.error(arrErroes[0]?.message);
+      toast.error(arrErroes[0]?.message, {
+        pauseOnHover: false,
+        delay: 0,
+      });
     }
-  });
-  const [togglePassword, setTooglePassword] = useState(false);
-
+  }, [errors]);
+  const { userInfo } = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    document.title = "Login Page";
+    if (userInfo?.email) navigate("/");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userInfo]);
   const handleSignIn = async (values) => {
     if (!isValid) return;
     await signInWithEmailAndPassword(auth, values.email, values.password);
     navigate("/");
   };
+
   return (
     <AuthenticationPage>
-      <form className="form" onSubmit={handleSubmit(handleSignIn)}>
+      <form
+        className="form"
+        onSubmit={handleSubmit(handleSignIn)}
+        autoComplete="off"
+      >
         <Field>
           <Label htmlFor="email">Email address</Label>
           <Input
             type="email"
             name="email"
-            placeholder="enter your email address"
+            placeholder="Enter your email address"
             control={control}
-          />
+          ></Input>
         </Field>
         <Field>
-          <Label htmlFor="password">password address</Label>
-          <Input
-            type={togglePassword ? "text" : "password"}
-            name="password"
-            placeholder="enter your password address"
-            control={control}
-          >
-            {!togglePassword ? (
-              <IconEyeClose
-                onClick={() => setTooglePassword(true)}
-              ></IconEyeClose>
-            ) : (
-              togglePassword && (
-                <IconEyeOpen
-                  onClick={() => setTooglePassword(false)}
-                ></IconEyeOpen>
-              )
-            )}
-          </Input>
+          <Label htmlFor="password">Password</Label>
+          <InputPasswordToggle control={control}></InputPasswordToggle>
         </Field>
         <div className="have-account">
           You have not had an account?{" "}
-          <NavLink to={"/sign-up"}>regit tor</NavLink>
+          <NavLink to={"/sign-up"}>Register an account</NavLink>{" "}
         </div>
         <Button
-          style={{ maxWidth: 350, margin: "0 auto" }}
           type="submit"
+          style={{
+            width: "100%",
+            maxWidth: 300,
+            margin: "0 auto",
+          }}
           isLoading={isSubmitting}
           disabled={isSubmitting}
         >
-          button
+          Sign Up
         </Button>
       </form>
     </AuthenticationPage>
   );
 };
 
-export default SignIn;
+export default SignInPage;

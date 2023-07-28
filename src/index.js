@@ -5,10 +5,11 @@ import reportWebVitals from "./reportWebVitals";
 import { ThemeProvider } from "styled-components";
 import { GlobalStyles } from "./styles/GlobalStyles";
 import { theme } from "./utils/constants";
-import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
+import { createRoot } from "react-dom/client";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 const container = document.getElementById("root");
 const root = createRoot(container);
 
@@ -17,8 +18,8 @@ root.render(
     <ThemeProvider theme={theme}>
       <GlobalStyles></GlobalStyles>
       <BrowserRouter>
-        <ToastContainer />
         <App />
+        <ToastContainer></ToastContainer>
       </BrowserRouter>
     </ThemeProvider>
   </React.StrictMode>

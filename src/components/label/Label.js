@@ -6,14 +6,13 @@ const LabelStyles = styled.label`
   font-weight: 600;
   cursor: pointer;
 `;
-const label = ({ htmlFor = "", children, ...props }) => {
+
+const Label = ({ htmlFor = "", children, ...props }) => {
   return (
-    <div>
-      <LabelStyles htmlFor={htmlFor} {...props}>
-        {children}
-      </LabelStyles>
-    </div>
+    <LabelStyles htmlFor={htmlFor} {...props}>
+      {children}
+    </LabelStyles>
   );
 };
 
-export default label;
+export default Label;
