@@ -1,30 +1,50 @@
 import { Button } from "components/button";
-import { Checkbox, Radio } from "components/checkbox";
+import { Radio } from "components/checkbox";
 import { Dropdown } from "components/dropdown";
 import { Field } from "components/field";
 import { Input } from "components/input";
 import { Label } from "components/label";
 import React from "react";
 import { useForm } from "react-hook-form";
+import slugify from "slugify";
 import styled from "styled-components";
+import { postStatus } from "utils/constants";
+import ImageUpload from "components/image/ImageUpload";
+import useFirebaseImage from "hook/useFirebaseImage";
+import Toggle from "components/toggle/Toggle";
+
 const PostAddNewStyles = styled.div``;
 
 const PostAddNew = () => {
-  const { control, watch, setValue } = useForm({
+  const { control, watch, setValue, handleSubmit, getValues } = useForm({
     mode: "onChange",
     defaultValues: {
-      status: "",
+      status: 2,
       category: "",
+      title: "",
+      slug: "",
+      hot: false,
     },
   });
+  const watchHot = watch("hot");
   const watchStatus = watch("status");
-  const watchCategory = watch("category");
-  console.log("PostAddNew ~ watchCategory", watchCategory);
+  // const watchCategory = watch("category");
+  const addPostHandler = async (values) => {
+    const cloneValues = { ...values };
+    cloneValues.slug = slugify(values.slug || values.title);
+
+    cloneValues.status = Number(values.status);
+    // handleUploadImage(cloneValues.image);
+  };
+
+  const { image, progress, handleSelectImage, handleDeleteImage } =
+    useFirebaseImage(setValue, getValues);
+
   return (
     <PostAddNewStyles>
       <h1 className="dashboard-heading">Add new post</h1>
-      <form>
-        <div className="grid grid-cols-2 gap-x-10 mb-10">
+      <form onSubmit={handleSubmit(addPostHandler)}>
+        <div className="grid grid-cols-2 mb-10 gap-x-10">
           <Field>
             <Label>Title</Label>
             <Input
@@ -42,34 +62,46 @@ const PostAddNew = () => {
             ></Input>
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-x-10 mb-10">
+        <div className="grid grid-cols-2 mb-10 gap-x-10">
+          <Field>
+            <label>Image</label>
+            <ImageUpload
+              onChange={handleSelectImage}
+              handleDeleteImage={handleDeleteImage}
+              className="h-[250px]"
+              progress={progress}
+              image={image}
+            ></ImageUpload>
+            {/* <input type="file" name="image" onChange={onSelectImage} /> */}
+          </Field>
+
           <Field>
             <Label>Status</Label>
             <div className="flex items-center gap-x-5">
               <Radio
                 name="status"
                 control={control}
-                checked={watchStatus === "approved"}
+                checked={Number(watchStatus) === postStatus.APPROVED}
                 onClick={() => setValue("status", "approved")}
-                value="approved"
+                value={postStatus.APPROVED}
               >
                 Approved
               </Radio>
               <Radio
                 name="status"
                 control={control}
-                checked={watchStatus === "pending"}
+                checked={Number(watchStatus) === postStatus.PENDING}
                 onClick={() => setValue("status", "pending")}
-                value="pending"
+                value={postStatus.PENDING}
               >
                 Pending
               </Radio>
               <Radio
                 name="status"
                 control={control}
-                checked={watchStatus === "reject"}
+                checked={Number(watchStatus) === postStatus.REJECTED}
                 onClick={() => setValue("status", "reject")}
-                value="reject"
+                value={postStatus.REJECTED}
               >
                 Reject
               </Radio>
@@ -80,7 +112,7 @@ const PostAddNew = () => {
             <Input control={control} placeholder="Find the author"></Input>
           </Field>
         </div>
-        <div className="grid grid-cols-2 gap-x-10 mb-10">
+        <div className="grid grid-cols-2 mb-10 gap-x-10">
           <Field>
             <Label>Category</Label>
             <Dropdown>
@@ -91,7 +123,15 @@ const PostAddNew = () => {
               <Dropdown.Option>Developer</Dropdown.Option>
             </Dropdown>
           </Field>
-          <Field></Field>
+          <div className="grid grid-cols-2 mb-10 gap-x-10">
+            <Field>
+              <Label>Feature post</Label>
+              <Toggle
+                on={watchHot === true}
+                onClick={() => setValue("hot", !watchHot)}
+              ></Toggle>
+            </Field>
+          </div>
         </div>
         <Button type="submit" className="mx-auto">
           Add new post
