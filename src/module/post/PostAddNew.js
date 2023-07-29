@@ -4,7 +4,7 @@ import { Dropdown } from "components/dropdown";
 import { Field } from "components/field";
 import { Input } from "components/input";
 import { Label } from "components/label";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import slugify from "slugify";
 import styled from "styled-components";
@@ -12,10 +12,15 @@ import { postStatus } from "utils/constants";
 import ImageUpload from "components/image/ImageUpload";
 import useFirebaseImage from "hook/useFirebaseImage";
 import Toggle from "components/toggle/Toggle";
+import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import { db } from "firebase-app/firebase-config";
+import { useAuth } from "contexts/auth-context";
+import { toast } from "react-toastify";
 
 const PostAddNewStyles = styled.div``;
 
 const PostAddNew = () => {
+  const { userInfo } = useAuth();
   const { control, watch, setValue, handleSubmit, getValues } = useForm({
     mode: "onChange",
     defaultValues: {
@@ -24,21 +29,47 @@ const PostAddNew = () => {
       title: "",
       slug: "",
       hot: false,
+      categoryId: "",
     },
   });
   const watchHot = watch("hot");
+  const { image, progress, handleSelectImage, handleDeleteImage } =
+    useFirebaseImage(setValue, getValues);
+
+  const [categories, setCategories] = useState([]);
   const watchStatus = watch("status");
   // const watchCategory = watch("category");
   const addPostHandler = async (values) => {
     const cloneValues = { ...values };
-    cloneValues.slug = slugify(values.slug || values.title);
-
+    cloneValues.slug = slugify(values.slug || values.title, { lower: true });
     cloneValues.status = Number(values.status);
-    // handleUploadImage(cloneValues.image);
+    const colRef = collection(db, "posts");
+    await addDoc(colRef, {
+      ...cloneValues,
+      image,
+      userId: userInfo.uid,
+    });
+    toast.success("create new post successfully");
   };
 
-  const { image, progress, handleSelectImage, handleDeleteImage } =
-    useFirebaseImage(setValue, getValues);
+  useEffect(() => {
+    async function getData() {
+      const colRef = collection(db, "categories");
+      const q = query(colRef, where("status", "==", 1));
+      const querySnapshot = await getDocs(q);
+      let result = [];
+      querySnapshot.forEach((doc) => {
+        console.log(doc.id, doc.data());
+        result.push({
+          id: doc.id,
+          ...doc.data(),
+        });
+      });
+
+      setCategories(result);
+    }
+    getData();
+  }, []);
 
   return (
     <PostAddNewStyles>
@@ -76,6 +107,39 @@ const PostAddNew = () => {
           </Field>
 
           <Field>
+            <Label>Category</Label>
+            <Dropdown>
+              <Dropdown.Select placeholder="Select the category"></Dropdown.Select>
+              <Dropdown.List>
+                {categories.length > 0 &&
+                  categories.map((item) => (
+                    <Dropdown.Option
+                      key={item.id}
+                      onClick={() => setValue("categoryId", item.id)}
+                    >
+                      {item.name}
+                    </Dropdown.Option>
+                  ))}
+              </Dropdown.List>
+            </Dropdown>
+          </Field>
+
+          <Field>
+            <Label>Author</Label>
+            <Input control={control} placeholder="Find the author"></Input>
+          </Field>
+        </div>
+        <div className="grid grid-cols-2 mb-10 gap-x-10"></div>
+
+        <div className="grid grid-cols-2 mb-10 gap-x-10">
+          <Field>
+            <Label>Feature post</Label>
+            <Toggle
+              on={watchHot === true}
+              onClick={() => setValue("hot", !watchHot)}
+            ></Toggle>
+          </Field>
+          <Field>
             <Label>Status</Label>
             <div className="flex items-center gap-x-5">
               <Radio
@@ -107,31 +171,6 @@ const PostAddNew = () => {
               </Radio>
             </div>
           </Field>
-          <Field>
-            <Label>Author</Label>
-            <Input control={control} placeholder="Find the author"></Input>
-          </Field>
-        </div>
-        <div className="grid grid-cols-2 mb-10 gap-x-10">
-          <Field>
-            <Label>Category</Label>
-            <Dropdown>
-              <Dropdown.Option>Knowledge</Dropdown.Option>
-              <Dropdown.Option>Blockchain</Dropdown.Option>
-              <Dropdown.Option>Setup</Dropdown.Option>
-              <Dropdown.Option>Nature</Dropdown.Option>
-              <Dropdown.Option>Developer</Dropdown.Option>
-            </Dropdown>
-          </Field>
-          <div className="grid grid-cols-2 mb-10 gap-x-10">
-            <Field>
-              <Label>Feature post</Label>
-              <Toggle
-                on={watchHot === true}
-                onClick={() => setValue("hot", !watchHot)}
-              ></Toggle>
-            </Field>
-          </div>
         </div>
         <Button type="submit" className="mx-auto">
           Add new post
