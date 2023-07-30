@@ -12,7 +12,14 @@ import { postStatus } from "utils/constants";
 import ImageUpload from "components/image/ImageUpload";
 import useFirebaseImage from "hook/useFirebaseImage";
 import Toggle from "components/toggle/Toggle";
-import { addDoc, collection, getDocs, query, where } from "firebase/firestore";
+import {
+  addDoc,
+  collection,
+  getDocs,
+  query,
+  serverTimestamp,
+  where,
+} from "firebase/firestore";
 import { db } from "firebase-app/firebase-config";
 import { useAuth } from "contexts/auth-context";
 import { toast } from "react-toastify";
@@ -21,7 +28,7 @@ const PostAddNewStyles = styled.div``;
 
 const PostAddNew = () => {
   const { userInfo } = useAuth();
-  const { control, watch, setValue, handleSubmit, getValues } = useForm({
+  const { control, watch, setValue, handleSubmit, getValues, reset } = useForm({
     mode: "onChange",
     defaultValues: {
       status: 2,
@@ -30,27 +37,57 @@ const PostAddNew = () => {
       slug: "",
       hot: false,
       categoryId: "",
+      image: "",
     },
   });
   const watchHot = watch("hot");
-  const { image, progress, handleSelectImage, handleDeleteImage } =
-    useFirebaseImage(setValue, getValues);
+  const {
+    image,
+    progress,
+    handleSelectImage,
+    handleResetUpload,
+    handleDeleteImage,
+  } = useFirebaseImage(setValue, getValues);
 
   const [categories, setCategories] = useState([]);
+  const [selectCategory, setSelectCategory] = useState("");
   const watchStatus = watch("status");
-  // const watchCategory = watch("category");
+  const [loading, setLoading] = useState(false);
   const addPostHandler = async (values) => {
-    const cloneValues = { ...values };
-    cloneValues.slug = slugify(values.slug || values.title, { lower: true });
-    cloneValues.status = Number(values.status);
-    const colRef = collection(db, "posts");
-    await addDoc(colRef, {
-      ...cloneValues,
-      image,
-      userId: userInfo.uid,
-    });
-    toast.success("create new post successfully");
+    setLoading(true);
+    try {
+      const cloneValues = { ...values };
+      cloneValues.slug = slugify(values.slug || values.title, { lower: true });
+      cloneValues.status = Number(values.status);
+      const colRef = collection(db, "posts");
+      await addDoc(colRef, {
+        ...cloneValues,
+        image,
+        userId: userInfo.uid,
+        createAt: serverTimestamp(),
+      });
+      toast.success("create new post successfully");
+      reset({
+        status: 2,
+        category: "",
+        title: "",
+        slug: "",
+        hot: false,
+        categoryId: "",
+        image: "",
+      });
+      handleResetUpload();
+      setSelectCategory({});
+    } catch (error) {
+      loading(false);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    document.title = "monkey Blogging - Add new post ";
+  }, []);
 
   useEffect(() => {
     async function getData() {
@@ -70,6 +107,11 @@ const PostAddNew = () => {
     }
     getData();
   }, []);
+
+  const handleClickOption = (item) => {
+    setValue("categoryId", item.id);
+    setSelectCategory(item);
+  };
 
   return (
     <PostAddNewStyles>
@@ -109,19 +151,26 @@ const PostAddNew = () => {
           <Field>
             <Label>Category</Label>
             <Dropdown>
-              <Dropdown.Select placeholder="Select the category"></Dropdown.Select>
+              <Dropdown.Select
+                placeholder={`${selectCategory.name || "Select the category"}`}
+              ></Dropdown.Select>
               <Dropdown.List>
                 {categories.length > 0 &&
                   categories.map((item) => (
                     <Dropdown.Option
                       key={item.id}
-                      onClick={() => setValue("categoryId", item.id)}
+                      onClick={() => handleClickOption(item)}
                     >
                       {item.name}
                     </Dropdown.Option>
                   ))}
               </Dropdown.List>
             </Dropdown>
+            {selectCategory?.name && (
+              <span className="inline-block p-4 text-sm font-medium bg-gray-200 rounded-lg">
+                {selectCategory?.name}
+              </span>
+            )}
           </Field>
 
           <Field>
@@ -172,7 +221,12 @@ const PostAddNew = () => {
             </div>
           </Field>
         </div>
-        <Button type="submit" className="mx-auto">
+        <Button
+          type="submit"
+          className="mx-auto w-[250px]"
+          isLoading={loading}
+          disabled={loading}
+        >
           Add new post
         </Button>
       </form>
