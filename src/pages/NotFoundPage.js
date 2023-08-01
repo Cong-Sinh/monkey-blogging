@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, Navigate } from "react-router-dom";
 import styled from "styled-components";
 const NotFoundPageStyles = styled.div`
   height: 100vh;
@@ -33,7 +33,7 @@ const NotFoundPage = () => {
         <img srcSet="/logo.png 2x" alt="monkey-blogging" />
       </NavLink>
       <h1 className="heading">Oops! Page not found</h1>
-      <NavLink to="/" className={"back"}>
+      <NavLink to={"/"} className={"back"}>
         Back to home
       </NavLink>
     </NotFoundPageStyles>

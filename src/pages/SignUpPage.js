@@ -10,9 +10,11 @@ import { toast } from "react-toastify";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { auth, db } from "firebase-app/firebase-config";
 import { NavLink, useNavigate } from "react-router-dom";
-import { setDoc, doc } from "firebase/firestore";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import AuthenticationPage from "./AuthenticationPage";
 import InputPasswordToggle from "components/input/InputPasswordToggle";
+import { userRole } from "utils/constants";
+import { userStatus } from "utils/constants";
 
 const schema = yup.object({
   fullname: yup.string().required("Please enter your fullname"),
@@ -38,21 +40,20 @@ const SignUpPage = () => {
   });
   const handleSignUp = async (values) => {
     if (!isValid) return;
-    await createUserWithEmailAndPassword(auth, values?.email, values?.password);
+    await createUserWithEmailAndPassword(auth, values.email, values.password);
     await updateProfile(auth.currentUser, {
       displayName: values.fullname,
     });
-    console.log(handleSignUp);
-    // const colRef = collection(db, "users");
-    // await addDoc(colRef, {
-    //   fullname: values?.fullname,
-    //   email: values?.email,
-    //   password: values?.password,
-    // });
-    await setDoc(doc(db, "users", auth.currentUser.uid), {
+    const colRef = collection(db, "users");
+    await addDoc(colRef, {
       fullname: values.fullname,
       email: values.email,
       password: values.password,
+      avatar:
+        "https://images.unsplash.com/photo-1690840955042-3d0f3a4b1f4d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80",
+      status: userRole.ADMIN,
+      role: userStatus.BAN,
+      createdAt: serverTimestamp(),
     });
     toast.success("Register successfully!!!");
     navigate("/");
