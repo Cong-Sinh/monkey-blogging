@@ -15,6 +15,8 @@ import Toggle from "components/toggle/Toggle";
 import {
   addDoc,
   collection,
+  doc,
+  getDoc,
   getDocs,
   query,
   serverTimestamp,
@@ -23,6 +25,7 @@ import {
 import { db } from "firebase-app/firebase-config";
 import { useAuth } from "contexts/auth-context";
 import { toast } from "react-toastify";
+import DashboardHeading from "drafts/DashboardHeading";
 
 const PostAddNewStyles = styled.div``;
 
@@ -36,8 +39,9 @@ const PostAddNew = () => {
       title: "",
       slug: "",
       hot: false,
-      categoryId: "",
+      category: {},
       image: "",
+      user: {},
     },
   });
   const watchHot = watch("hot");
@@ -53,6 +57,23 @@ const PostAddNew = () => {
   const [selectCategory, setSelectCategory] = useState("");
   const watchStatus = watch("status");
   const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    async function fetchUserData() {
+      if (!userInfo.uid) return;
+      const q = query(
+        collection(db, "users"),
+        where("email", "==", userInfo.email)
+      );
+      const querySnapshot = await getDocs(q);
+      querySnapshot.forEach((doc) => {
+        setValue("user", {
+          id: doc.id,
+          ...doc.data(),
+        });
+      });
+    }
+    fetchUserData();
+  }, [userInfo.email, userInfo.uid]);
   const addPostHandler = async (values) => {
     setLoading(true);
     try {
@@ -63,7 +84,6 @@ const PostAddNew = () => {
       await addDoc(colRef, {
         ...cloneValues,
         image,
-        userId: userInfo.uid,
         createAt: serverTimestamp(),
       });
       toast.success("create new post successfully");
@@ -73,8 +93,9 @@ const PostAddNew = () => {
         title: "",
         slug: "",
         hot: false,
-        categoryId: "",
+        category: {},
         image: "",
+        user: {},
       });
       handleResetUpload();
       setSelectCategory({});
@@ -108,14 +129,20 @@ const PostAddNew = () => {
     getData();
   }, []);
 
-  const handleClickOption = (item) => {
+  const handleClickOption = async (item) => {
+    const colRef = doc(db, "categories", item.id);
+    const docData = await getDoc(colRef);
+    setValue("category", {
+      id: docData.id,
+      ...docData.data(),
+    });
     setValue("categoryId", item.id);
     setSelectCategory(item);
   };
 
   return (
     <PostAddNewStyles>
-      <h1 className="dashboard-heading">Add new post</h1>
+      <DashboardHeading title="Add post" desc="Add new post"></DashboardHeading>
       <form onSubmit={handleSubmit(addPostHandler)}>
         <div className="grid grid-cols-2 mb-10 gap-x-10">
           <Field>

@@ -9,7 +9,7 @@ const UserManage = () => {
     <div>
       <DashboardHeading
         title="Users"
-        desc="Manage your user"
+        desc="Manage your usere"
       ></DashboardHeading>
       <div className="flex justify-end mb-10">
         <Button bind="ghost" to="/manage/add-user">
