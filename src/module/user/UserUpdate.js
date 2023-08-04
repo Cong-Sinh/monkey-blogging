@@ -12,6 +12,7 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import { Textarea } from "components/textarea";
 import { userRole, userStatus } from "utils/constants";
 
 const UserUpdate = () => {
@@ -182,6 +183,12 @@ const UserUpdate = () => {
                 User
               </Radio>
             </FieldCheckboxes>
+          </Field>
+        </div>
+        <div className="form-layout">
+          <Field>
+            <label>description</label>
+            <Textarea name="description" control={control} />
           </Field>
         </div>
         <Button
