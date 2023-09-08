@@ -51,8 +51,13 @@ const SignInPage = () => {
   }, [userInfo]);
   const handleSignIn = async (values) => {
     if (!isValid) return;
-    await signInWithEmailAndPassword(auth, values.email, values.password);
-    navigate("/");
+    try {
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      navigate("/");
+    } catch (error) {
+      if (error.message.includes("wrong-password"))
+        toast.error("It seems your password was wrong");
+    }
   };
 
   return (
@@ -81,15 +86,11 @@ const SignInPage = () => {
         </div>
         <Button
           type="submit"
-          style={{
-            width: "100%",
-            maxWidth: 300,
-            margin: "0 auto",
-          }}
+          className="w-full max-w-[300px] mx-auto"
           isLoading={isSubmitting}
           disabled={isSubmitting}
         >
-          Sign Up
+          Login
         </Button>
       </form>
     </AuthenticationPage>
