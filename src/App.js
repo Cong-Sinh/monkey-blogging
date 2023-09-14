@@ -38,8 +38,8 @@ function App() {
             <Route path="/" element={<HomePage></HomePage>}></Route>
             <Route path="/sign-up" element={<SignUpPage></SignUpPage>}></Route>
             <Route path="/sign-in" element={<SignInPage></SignInPage>}></Route>
-
             <Route path="*" element={<NotFoundPage></NotFoundPage>}></Route>
+
             <Route
               path="/:slug"
               element={<PostDetailsPage></PostDetailsPage>}

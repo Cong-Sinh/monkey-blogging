@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, Navigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import styled from "styled-components";
 const NotFoundPageStyles = styled.div`
   height: 100vh;
